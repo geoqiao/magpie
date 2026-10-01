@@ -1,0 +1,29 @@
+{
+  "summary": "网关页「接入」的提示语多了一种状态：网关监听在回环之外、又没开启局域网共享时，提示改成「已开放到网络 · 任何能连上的人用任意密钥都能访问」（后端新增 gateway.open 字段，i18n 补了中英文案）。命令行 serve / web / models 打印的地址也改用 MAGPIE_PUBLIC_URL。",
+  "scenes": [
+    {
+      "title": "网关接入提示",
+      "shots": [
+        {
+          "file": "01-connect-hint.png",
+          "caption": "网关页「接入」标题旁的提示语",
+          "width": 1120
+        },
+        {
+          "file": "02-connect-section.png",
+          "caption": "接入区：当前给出的地址、密钥与示例",
+          "width": 2560
+        }
+      ]
+    }
+  ],
+  "video": null,
+  "poster": null,
+  "errors": [],
+  "leak": false,
+  "skipped": null,
+  "mismatch": "描述里说控制台会把 MAGPIE_PUBLIC_URL 作为网络地址列在本机地址旁边、网关卡片带公开地址——这些在本 diff 里没有实现（属于基线 #372 已有的代码），本 diff 在控制台只新增了那条「已开放到网络」的提示与对应文案；也没有新增任何页面、设置项或按钮。",
+  "unseen": "「已开放到网络」这条提示只在网关监听回环以外的地址（MAGPIE_ADDR）且未开启局域网共享时出现，沙盒里网关处在回环状态，而 MAGPIE_ADDR 在启动时就定了，界面里改不了，所以新文案可能看不到；MAGPIE_PUBLIC_URL 也没设置，因此「接入」区只会给出本机地址，看不到公开地址那一项。另外 `magpie serve` / `magpie web` / `magpie models` 打印的地址是终端输出，不在浏览器界面里，无法截图。",
+  "interactive": false,
+  "pages": 1
+}
