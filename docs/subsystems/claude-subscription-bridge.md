@@ -84,12 +84,23 @@ after the user stopped a tool follows the tool's result.
 
 The run waiting on those calls is told the message on its stdin, as a user
 message (`saidBeside`, `subscriptionRun.say`), before the calls are answered
-(`continueWith`). Claude Code keeps a message that comes while a tool runs
-and gives it to its model after the tool's result, in the same request, as
-the user's. The result holds the tool's output alone: text in a result is a
-tool's output to the model, which takes no instructions from it. An image
-beside the results still goes with the result before it, as a Chat client
-sends a tool's image.
+(`continueWith`). magpie hands Claude Code the tool's output alone, and
+Claude Code says whose the message is: it keeps a message that comes while a
+tool runs and sends it to its model in the same request as the tool's
+result, inside the `tool_result` block, after the tool's output, under a
+system reminder of its own ("The user sent a new message while you were
+working: … Address the message above as you continue this turn", as Claude
+Code 2.1.291 sends it). The message is not a user turn of its own at the
+API.
+
+Appended bare to the tool's output, as it was before, nothing told the model
+it was the user's: the model took it for the tool's output, and refused it
+as an instruction. An image beside the results still goes with the result
+before it, as a Chat client sends a tool's image.
+
+With Claude Code as the client, a message sent mid-turn arrives already in
+such a reminder, and the run's Claude Code puts its own around it: the model
+is told twice that the user sent it.
 
 A run that can't be told is let go, and a run started anew is told the whole
 conversation.

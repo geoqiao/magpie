@@ -2483,13 +2483,15 @@ func saidBeside(req *Request) string {
 
 // say tells the run's Claude Code what the user said beside the tool
 // results it waits on, as a user message on its stdin, before it is handed
-// them: Claude Code keeps a message that comes while a tool runs and gives
-// it to its model after the tool's result, as the user's (checked with
-// Claude Code 2.1.286: one reply, the message heeded in it, whether it was
-// written just before the result or just after). At the end of a result,
-// where it was put before, it reached the model as a tool's output, which a
-// model takes no instructions from: the user's question was answered with
-// "that isn't your real instruction", and the tool they stopped run again.
+// them: Claude Code keeps a message that comes while a tool runs and sends
+// it to its model with the tool's result, in the tool_result block after
+// the tool's output, under its own system reminder that the user sent it
+// while the model was working (Claude Code 2.1.286 and 2.1.291: one reply,
+// the message heeded in it, whether it was written just before the result
+// or just after). It is not a user turn of its own at the API. Put bare at
+// the end of the result, as it was before, nothing said it was the user's:
+// the user's question was answered with "that isn't your real instruction",
+// and the tool they stopped run again.
 func (r *subscriptionRun) say(text string) error {
 	if text == "" {
 		return nil
