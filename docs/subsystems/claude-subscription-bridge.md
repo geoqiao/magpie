@@ -75,6 +75,25 @@ The run goes on with the conversation as it told it. Its Claude Code still
 holds the context block and the notification. The client's next turn
 brings its own context.
 
+## What the user says beside tool results
+
+A request with tool results can hold a message of the user's after them.
+Claude Code as the client puts one sent while a tool ran there, as a system
+reminder. Pi leaves a stopped reply out of the request, so a message sent
+after the user stopped a tool follows the tool's result.
+
+The run waiting on those calls is told the message on its stdin, as a user
+message (`saidBeside`, `subscriptionRun.say`), before the calls are answered
+(`continueWith`). Claude Code keeps a message that comes while a tool runs
+and gives it to its model after the tool's result, in the same request, as
+the user's. The result holds the tool's output alone: text in a result is a
+tool's output to the model, which takes no instructions from it. An image
+beside the results still goes with the result before it, as a Chat client
+sends a tool's image.
+
+A run that can't be told is let go, and a run started anew is told the whole
+conversation.
+
 ## Files a run leaves
 
 - Its session: `<config>/projects/<work project>/<session>.jsonl`, for
@@ -97,9 +116,12 @@ magpie doesn't do it.
 ## Verification
 
 ```sh
-go test -tags nogui ./internal/gateway/ -run 'ClaudeRewritten|ClaudeSessionTempFiles|ClaudeLetGo|ClaudeSessionFiles|ClaudeOldSessions' -count=1
+go test -tags nogui ./internal/gateway/ -run 'ClaudeRewritten|ClaudeSessionTempFiles|ClaudeLetGo|ClaudeSessionFiles|ClaudeOldSessions|WhatTheUserSays' -count=1
 ```
 
 `claude_rewritten_test.go` has a case for each relaxation and one for each
 rule that keeps another conversation out. `claude_resume_test.go`'s harness
 stands in for Claude Code with a script that keeps sessions as it does.
+`claude_subscription_said_test.go` sends a request with a message beside a
+tool result as Pi, Claude Code and a Responses client do, and reads what the
+run's Claude Code was told and what its call was answered.
