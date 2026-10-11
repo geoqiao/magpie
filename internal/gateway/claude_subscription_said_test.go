@@ -232,6 +232,27 @@ func TestWhatTheUserSaysIsNotLostWhenTheRunCannotBeTold(t *testing.T) {
 	}
 }
 
+// One magpie ended still takes a write until it is reaped, which no one
+// reads: the message isn't written to it, and a run started anew is told
+// the conversation.
+func TestWhatTheUserSaysIsNotWrittenToARunMagpieEnded(t *testing.T) {
+	h := newToldRun(t, "toolu_1")
+	h.run.mu.Lock()
+	h.run.killed = true
+	h.run.mu.Unlock()
+	_, started := h.send(t, provider.Chat, `{"model":"claude-sonnet-5","tools":[{"type":"function","function":{"name":"bash","parameters":{"type":"object"}}}],"messages":[
+		{"role":"user","content":"run the tests"},
+		{"role":"assistant","content":null,"tool_calls":[{"id":"toolu_1","type":"function","function":{"name":"bash","arguments":"{}"}}]},
+		{"role":"tool","tool_call_id":"toolu_1","content":"aborted"},
+		{"role":"user","content":"what does the script do?"}]}`)
+	if !started {
+		t.Fatal("no new run was started for a conversation whose run magpie had ended")
+	}
+	if said := h.said(t); len(said) != 0 {
+		t.Errorf("a Claude Code magpie ended was written %q, which no one reads", said)
+	}
+}
+
 type failingStdin struct{}
 
 func (failingStdin) Write([]byte) (int, error) { return 0, errors.New("broken pipe") }

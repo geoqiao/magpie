@@ -2711,8 +2711,7 @@ func (r *subscriptionRun) say(text string) error {
 	}
 	line, _ := json.Marshal(map[string]any{"type": "user", "message": map[string]any{"role": "user",
 		"content": []map[string]any{{"type": "text", "text": text}}}})
-	_, err := r.stdin.Write(append(line, '\n'))
-	return err
+	return r.tell(line)
 }
 
 // remap finds the run a client's results are for when the client named the
