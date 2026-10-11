@@ -2565,8 +2565,9 @@ func closeBlocks(blocks []map[string]any, text *strings.Builder) []map[string]an
 // results: the ones sent since the last assistant message. They are the
 // run's when one of them is a call it made; the rest it hasn't made yet.
 // An image sent beside the results, as a client whose tool messages hold
-// text only sends a tool's (Chat), goes with the result before it. Text
-// sent beside them is the user's, not a tool's (saidBeside).
+// text only sends a tool's (Chat), goes with the result before it, and so
+// does the line the client wrote before it (captions). Other text sent
+// beside them is the user's, not a tool's (saidBeside).
 func (b *subscriptionBridge) findRun(req *Request) (*subscriptionRun, []Part) {
 	run, fresh, _ := b.match(req)
 	return run, fresh
@@ -2597,11 +2598,17 @@ func (b *subscriptionBridge) match(req *Request) (*subscriptionRun, []Part, stri
 	}
 	var fresh, loose []Part
 	for _, m := range req.Messages[i:] {
-		for _, p := range m.Parts {
+		for k, p := range m.Parts {
 			switch {
 			case p.Kind == ToolResult:
 				p.Images = slices.Clone(p.Images)
 				fresh = append(fresh, p)
+			case captions(m, k) && len(fresh) > 0:
+				last := &fresh[len(fresh)-1]
+				if last.Text != "" && p.Text != "" {
+					last.Text += "\n\n"
+				}
+				last.Text += p.Text
 			case p.Kind == Image && len(fresh) > 0:
 				last := &fresh[len(fresh)-1]
 				last.Images = append(last.Images, p)
@@ -2670,7 +2677,8 @@ func (b *subscriptionBridge) match(req *Request) (*subscriptionRun, []Part, stri
 // Claude Code puts a message the user sends while a tool runs there, as a
 // system reminder (#872). Pi's user who stops a tool and then says
 // something has it there too: the reply that was stopped is left out of
-// the request, so the message follows the tool's result.
+// the request, so the message follows the tool's result. The line a client
+// wrote before a tool's images is not the user's (captions).
 func saidBeside(req *Request) string {
 	i := len(req.Messages)
 	for i > 0 && req.Messages[i-1].Role != "assistant" {
@@ -2679,16 +2687,25 @@ func saidBeside(req *Request) string {
 	var said []string
 	results := false
 	for _, m := range req.Messages[i:] {
-		for _, p := range m.Parts {
+		for k, p := range m.Parts {
 			switch {
 			case p.Kind == ToolResult:
 				results = true
-			case p.Kind == Text && results && strings.TrimSpace(p.Text) != "":
+			case p.Kind == Text && results && !captions(m, k) && strings.TrimSpace(p.Text) != "":
 				said = append(said, p.Text)
 			}
 		}
 	}
 	return strings.Join(said, "\n\n")
+}
+
+// captions says m's part k is the line a client writes before a tool's
+// images when it sends them beside the results: text with an image next
+// after it, as pi-ai's "Attached image(s) from tool result:" (#1382 tells
+// that message by the same shape, lostFromRun). The client wrote it, not
+// the user, and it goes with the images to the result before it.
+func captions(m Message, k int) bool {
+	return m.Parts[k].Kind == Text && k+1 < len(m.Parts) && m.Parts[k+1].Kind == Image
 }
 
 // say tells the run's Claude Code what the user said beside the tool

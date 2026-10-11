@@ -183,6 +183,14 @@ func TestWhatTheUserSaysBesideAToolResultIsSaidNotTheToolsOutput(t *testing.T) {
 			{"type":"function_call_output","call_id":"toolu_1","output":"37 passed"},
 			{"role":"user","content":[{"type":"input_text","text":"also run the linter"}]}]}`,
 			provider.Responses, "37 passed", []string{"also run the linter"}},
+		// pi-ai, a tool's image after its result: the line before the
+		// image is the client's, and stays with the result as the image does
+		{"the line before a tool's image (Chat)", `{"model":"claude-sonnet-5","tools":[{"type":"function","function":{"name":"bash","parameters":{"type":"object"}}}],"messages":[
+			{"role":"user","content":"look at it"},
+			{"role":"assistant","content":null,"tool_calls":[{"id":"toolu_1","type":"function","function":{"name":"bash","arguments":"{}"}}]},
+			{"role":"tool","tool_call_id":"toolu_1","content":"read a.png"},
+			{"role":"user","content":[{"type":"text","text":"Attached image(s) from tool result:"},{"type":"image_url","image_url":{"url":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="}}]}]}`,
+			provider.Chat, "read a.png\n\nAttached image(s) from tool result:", nil},
 		// nothing said: nothing is told but the result
 		{"a result alone (Chat)", `{"model":"claude-sonnet-5","tools":[{"type":"function","function":{"name":"bash","parameters":{"type":"object"}}}],"messages":[
 			{"role":"user","content":"run the tests"},

@@ -215,8 +215,14 @@ API.
 
 Appended bare to the tool's output, as it was before, nothing told the model
 it was the user's: the model took it for the tool's output, and refused it
-as an instruction. An image beside the results still goes with the result
-before it, as a Chat client sends a tool's image.
+as an instruction.
+
+An image beside the results still goes with the result before it, as a Chat
+client sends a tool's image, and so does the text with an image next after
+it in the same message (`captions`): pi-ai's "Attached image(s) from tool
+result:", which the client wrote, not the user. This is the shape #1382
+tells that message by. A message of the user's own with an image after its
+text has the same shape and goes with the result too, as it did before.
 
 With Claude Code as the client, a message sent mid-turn arrives already in
 such a reminder, and the run's Claude Code puts its own around it: the model
