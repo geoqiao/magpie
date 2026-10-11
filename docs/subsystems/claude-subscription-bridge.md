@@ -259,7 +259,9 @@ sub-agents each start from their lead's conversation as it stands, its
 reply's calls answered with the placeholder "Fork started — processing in
 background" and the fork's directive after, and they come at once with the
 lead's own next turn; a client may also send a turn again while the first
-is still answered. The first to claim the run goes on in it. Each of the
+is still answered. The first to claim the run goes on in it; a fork that
+does has its directive told to the run as what the user said beside the
+results (above), not in the last result. Each of the
 others, and one whose run has ended, is a conversation of its own from
 there and gets a run started anew (`answeredElsewhere` in the log). It is
 never refused: Claude Code doesn't retry a 409, and the agent that sent it

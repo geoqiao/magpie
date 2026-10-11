@@ -53,7 +53,10 @@ func TestClaudeForksAnsweringTheLeadsCallsEachGetAnAnswer(t *testing.T) {
 	// Claude Code: a turn it is told from the start calls Agent three
 	// times, then makes the calls through its MCP server one after another,
 	// as Claude Code does, and says what their results said; a turn told
-	// with results in it says what those said.
+	// with results in it says what those said. A fork's directive is told
+	// to the run that waits on the calls before they are answered
+	// (saidBeside): Claude Code gives its model a message that came while
+	// a tool ran with the tool's result, so it is read with the results.
 	dir := t.TempDir()
 	testenv.Program(t, filepath.Join(dir, "claude"), `#!/bin/sh
 if [ "$1" = auth ]; then echo '{"loggedIn":true,"authMethod":"claude.ai","apiProvider":"firstParty","email":"lead@example.com","subscriptionType":"max"}'; exit 0; fi
@@ -84,6 +87,12 @@ while read -r line; do
     call='{"tool_call_id":"toolu_L'$$'_'$k'","name":"Agent","arguments":{"part":'$k'}}'
     got="$got $(curl -s -X POST -H 'Content-Type: application/json' --data "$call" "$cb")"
   done
+  case "$got" in *"Fork started"*)
+    while read -r told; do
+      case "$told" in *control_request*) continue ;; esac
+      got="$got $told"; break
+    done ;;
+  esac
   say "$(printf '%s' "$got" | marks)"
 done
 `)
